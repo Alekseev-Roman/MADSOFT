@@ -33,13 +33,10 @@ class MemeDB:
             async with new_session() as session:
                 meme_dict = new_meme.model_dump()
                 meme = MemeTextModel(**meme_dict)
-                res = session.add(meme)
+                session.add(meme)
                 await session.flush()
                 await session.commit()
-                if res.rowcount == 1:
-                    return True, meme.id, 'Success'
-                else:
-                    return False, -1, f'Entry was not added.'
+                return True, meme.id, 'Success'
         except Exception as e:
             return False, -1, f'Entry was not added.'
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 from typing import Annotated
 
 from schemas import MemeSchema, MemeSchemaAdd, MemeSchemaResult
@@ -22,8 +22,12 @@ async def get_meme(meme_id: int = None) -> list[MemeSchema]:
 
 
 @router.post('/memes')
-async def post_meme(meme: Annotated[MemeSchemaAdd, Depends()]) -> MemeSchemaResult:
-    res = await MemeDB.add_one(meme)
+async def post_meme(
+        img_meme: Annotated[UploadFile, File(description='An image file of your meme', media_type='image/jpeg')],
+        text_meme: Annotated[MemeSchemaAdd, Depends()]
+) -> MemeSchemaResult:
+    res = await MemeDB.add_one(text_meme)
+    print(img_meme.filename)
     return {'ok': res[0], 'id': res[1], 'result': res[2]}
 
 

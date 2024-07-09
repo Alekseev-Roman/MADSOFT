@@ -4,3 +4,5 @@ sqlalchemy~=2.0.3
 postgres>2.2.2
 asyncpg~=0.28.0
 pydantic~=2.8.2
+minio~=7.2.6
+urllib3~=2.2.2
