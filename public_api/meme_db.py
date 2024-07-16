@@ -6,13 +6,13 @@ from schemas import MemeSchema, MemeSchemaAdd
 
 class MemeDB:
     @classmethod
-    async def find_all(cls):
+    async def find_all(cls, page_number: int):
         try:
             async with new_session() as session:
                 query = select(MemeTextModel)
                 res = await session.execute(query)
                 task_models = res.scalars().all()
-                return True, task_models
+                return True, task_models[10 * (page_number + 1):10 * (page_number + 1) + 10]
         except Exception as e:
             return False, []
 

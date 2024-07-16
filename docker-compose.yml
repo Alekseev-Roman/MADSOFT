@@ -1,0 +1,42 @@
+services:
+  public_api:
+    container_name: public_api
+    build: ./public_api
+    ports:
+      - 127.0.0.1:8080:8080
+    depends_on:
+      - private_api
+      - sql_db
+    command: python3 main.py
+
+  private_api:
+    container_name: private_api
+    build: ./private_api
+    # ports:
+    #   - 127.0.0.1:8088:8088
+    depends_on:
+      - s3_db
+    command: python3 main.py
+
+  sql_db:
+    container_name: sql_db
+    image: postgres
+    ports:
+      - 9080:5432
+    environment:
+      POSTGRES_DB: "meme_db"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+    volumes:
+      - .:/docker-entrypoint-initdb.d
+
+  s3_db:
+    container_name: s3_db
+    image: minio/minio
+    ports:
+      - 9000:9000
+      - 9001:9001
+    restart: always
+    command:
+      minio server ~/s3 --console-address ":9001"
+

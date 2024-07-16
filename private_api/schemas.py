@@ -1,20 +1,22 @@
 from pydantic import BaseModel
+from fastapi import APIRouter, Depends, UploadFile, File
 
 
-class MemeSchemaAdd(BaseModel):
-    text: str = ''
+class MemeSchemaS3Params(BaseModel):
+    meme_id: int
+    bucket_name: str
+    object_name: str
 
 
-class MemeSchema(MemeSchemaAdd):
-    id: int
+class MemeSchemaS3(MemeSchemaS3Params):
+    img: bytes
 
 
-class MemeSchemaResult(BaseModel):
+class MemeSchemaS3Result(BaseModel):
     ok: bool = True
-    id: int
+    object_name: str
     result: str
 
 
-class MemeImg(BaseModel):
+class MemeSchemaS3GetResult(MemeSchemaS3Result):
     img: bytes
-

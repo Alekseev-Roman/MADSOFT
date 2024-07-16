@@ -1,78 +1,53 @@
-from sqlalchemy import select, update, delete
+from s3_database import session
+from schemas import MemeSchemaS3, MemeSchemaS3Params
 
-from sql_database import new_session, MemeTextModel
-from schemas import MemeSchema, MemeSchemaAdd
+import io
 
 
 class MemeDB:
     @classmethod
-    async def find_all(cls):
+    async def find_one(cls, bucket_name: str, object_name: str):
         try:
-            async with new_session() as session:
-                query = select(MemeTextModel)
-                res = await session.execute(query)
-                task_models = res.scalars().all()
-                return True, task_models
+            obj = session.get_object(bucket_name, object_name)
+            return True, object_name, f'Image {object_name} got from bucket: {bucket_name}', obj.data
         except Exception as e:
-            return False, []
+            return False, object_name, f"Image {object_name} didn't get from bucket: {bucket_name}", b""
 
     @classmethod
-    async def find_one(cls, meme_id: int):
+    async def add_one(cls, new_meme_s3: MemeSchemaS3):
         try:
-            async with new_session() as session:
-                query = select(MemeTextModel).where(MemeTextModel.id == meme_id)
-                res = await session.execute(query)
-                task_model = res.scalars().all()
-                return True, task_model
+            raw_img = io.BytesIO(new_meme_s3.img)
+            session.put_object(new_meme_s3.bucket_name, new_meme_s3.object_name, raw_img, raw_img.getbuffer().nbytes)
+            return (
+                True,
+                new_meme_s3.object_name,
+                f'Image of meme with id: {new_meme_s3.meme_id} was added to S3 by name: {new_meme_s3.object_name}'
+            )
         except Exception as e:
-            return False, []
+            return False, new_meme_s3.object_name, f'Image of meme with id: {new_meme_s3.meme_id} was not added to S3.'
 
     @classmethod
-    async def add_one(cls, new_meme: MemeSchemaAdd):
+    async def delete_one(cls, meme_s3: MemeSchemaS3Params):
         try:
-            async with new_session() as session:
-                meme_dict = new_meme.model_dump()
-                meme = MemeTextModel(**meme_dict)
-                session.add(meme)
-                await session.flush()
-                await session.commit()
-                return True, meme.id, 'Success'
+            session.remove_object(meme_s3.bucket_name, meme_s3.object_name)
+            return (
+                True,
+                meme_s3.object_name,
+                f'Image of meme with id: {meme_s3.meme_id} and name: {meme_s3.object_name} was deleted'
+            )
         except Exception as e:
-            return False, -1, f'Entry was not added.'
+            return False, meme_s3.object_name, f'Image of meme with id: {meme_s3.meme_id} was not deleted'
 
     @classmethod
-    async def delete_one(cls, meme_id: int):
+    async def update_one(cls, updated_meme: MemeSchemaS3):
         try:
-            async with new_session() as session:
-                query = (
-                    delete(MemeTextModel)
-                    .where(MemeTextModel.id == meme_id)
-                )
-                res = await session.execute(query)
-                await session.flush()
-                await session.commit()
-                if res.rowcount == 1:
-                    return True, meme_id, 'Success'
-                else:
-                    return False, meme_id, f'Entry by id: {meme_id} was not deleted'
+            session.remove_object(updated_meme.bucket_name, updated_meme.object_name)
+            raw_img = io.BytesIO(updated_meme.img)
+            session.put_object(updated_meme.bucket_name, updated_meme.object_name, raw_img, raw_img.getbuffer().nbytes)
+            return (
+                False,
+                updated_meme.object_name,
+                f'Image of meme with id: {updated_meme.meme_id} and name: {updated_meme.object_name} was updated'
+            )
         except Exception as e:
-            return False, meme_id, f'Entry by id: {meme_id} was not deleted'
-
-    @classmethod
-    async def update_one(cls, updated_meme: MemeSchema):
-        try:
-            async with new_session() as session:
-                query = (
-                    update(MemeTextModel)
-                    .where(MemeTextModel.id == updated_meme.id)
-                    .values(text=updated_meme.text)
-                )
-                res = await session.execute(query)
-                await session.flush()
-                await session.commit()
-                if res.rowcount == 1:
-                    return True, updated_meme.id, 'Success'
-                else:
-                    return False, updated_meme.id, f'Entry by id: {updated_meme.id} was not updated'
-        except Exception as e:
-            return False, updated_meme.id, f'Entry by id: {updated_meme.id} was not updated'
+            return False, updated_meme.object_name, f'Image of meme with id: {updated_meme.meme_id} was not updated'

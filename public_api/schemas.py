@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class MemeSchemaAdd(BaseModel):
-    text: str = ''
+    text: str
 
 
 class MemeSchema(MemeSchemaAdd):
@@ -13,8 +13,3 @@ class MemeSchemaResult(BaseModel):
     ok: bool = True
     id: int
     result: str
-
-
-class MemeImg(BaseModel):
-    img: bytes
-

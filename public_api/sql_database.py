@@ -13,7 +13,7 @@ class MemeTextModel(Model):
     text: Mapped[str | None]
 
 
-engine = create_async_engine("postgresql+asyncpg://postgres:postgres@localhost/meme_db")
+engine = create_async_engine("postgresql+asyncpg://postgres:postgres@sql_db/meme_db")
 new_session = async_sessionmaker(engine, expire_on_commit=False)
 
 
