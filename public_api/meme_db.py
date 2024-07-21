@@ -12,7 +12,7 @@ class MemeDB:
                 query = select(MemeTextModel)
                 res = await session.execute(query)
                 task_models = res.scalars().all()
-                return True, task_models[10 * (page_number + 1):10 * (page_number + 1) + 10]
+                return True, task_models[10 * page_number:10 * (page_number + 1)]
         except Exception as e:
             return False, []
 

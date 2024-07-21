@@ -12,31 +12,39 @@ services:
   private_api:
     container_name: private_api
     build: ./private_api
-    # ports:
-    #   - 127.0.0.1:8088:8088
     depends_on:
-      - s3_db
+      - minio
     command: python3 main.py
 
   sql_db:
     container_name: sql_db
     image: postgres
+    build: ./sql
     ports:
       - 9080:5432
     environment:
       POSTGRES_DB: "meme_db"
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
-    volumes:
-      - .:/docker-entrypoint-initdb.d
 
-  s3_db:
-    container_name: s3_db
+  minio:
     image: minio/minio
     ports:
       - 9000:9000
       - 9001:9001
-    restart: always
-    command:
-      minio server ~/s3 --console-address ":9001"
+    environment:
+      - "MINIO_ACCESS_KEY=minio"
+      - "MINIO_SECRET_KEY=minio123"
+    command: server ~/s3 --console-address :9001
 
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set myminio http://minio:9000 minio minio123) do sleep 1; done;
+      /usr/bin/mc mb myminio/madsoft-test-task;
+      /usr/bin/mc anonymous set public myminio/madsoft-test-task;
+      exit 0;
+      "

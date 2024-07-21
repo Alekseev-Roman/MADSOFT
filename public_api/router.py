@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Response, HTTPExceptio
 from typing import Annotated
 import requests
 
-from schemas import MemeSchema, MemeSchemaAdd, MemeSchemaResult
+from schemas import MemeSchema, MemeSchemaAdd, MemeSchemaResult, MemeSchemaGet
 from meme_db import MemeDB
 
 
@@ -10,22 +10,20 @@ router = APIRouter()
 
 
 @router.get(path='/memes')
-async def get_meme(meme_id: int = None, page_number: int = 0):
+async def get_meme(meme_id: int = None, page_number: int = 0) -> list[MemeSchemaGet]:
     if meme_id is None:
-        memes = await MemeDB.find_all(0 if page_number < 0 else page_number)
+        res, meme_texts = await MemeDB.find_all(0 if page_number < 0 else page_number)
     else:
-        memes = await MemeDB.find_one(meme_id)
+        res, meme_texts = await MemeDB.find_one(meme_id)
 
-    if memes[0]:
-        res = []
-        for meme in memes[1]:
-            img = requests.get(f'http://private_api:8088/images/memes?meme_id={meme_id}')
-            res.append(
-                {
-                    'text': meme.text, 'image': str(img.content)
-                }
+    if res:
+        memes = []
+        for meme in meme_texts:
+            img = requests.get(f'http://private_api:8088/images/memes?meme_id={meme.id}')
+            memes.append(
+                MemeSchemaGet(text=meme.text, image=str(img.content), id=meme.id)
             )
-        return res
+        return memes
     else:
         raise HTTPException(detail="Meme not found.", status_code=status.HTTP_404_NOT_FOUND)
 

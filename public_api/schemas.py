@@ -13,3 +13,7 @@ class MemeSchemaResult(BaseModel):
     ok: bool = True
     id: int
     result: str
+
+
+class MemeSchemaGet(MemeSchema):
+    image: str
